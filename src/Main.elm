@@ -2,6 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 
 
 main =
@@ -13,13 +15,25 @@ main =
         }
 
 
-init : Model -> ( Model, Cmd Msg )
-init model =
-    ( { todolist = [ { description = "description 1" } ] }, Cmd.none )
+
+-- We init our model with a todolist containing some dummy data
+
+
+defaultModel : Model
+defaultModel =
+    { todolist = [ { description = "Hello" } ]
+    , textField = ""
+    }
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( defaultModel, Cmd.none )
 
 
 type Msg
     = NoOp
+    | Change String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -29,6 +43,9 @@ update msg model =
             ( model
             , Cmd.none
             )
+
+        Change textInputValue ->
+            ( { model | textField = textInputValue }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -43,6 +60,7 @@ type alias Todo =
 
 type alias Model =
     { todolist : List Todo
+    , textField : String
     }
 
 
@@ -54,8 +72,9 @@ renderTodoList list =
 
 view : Model -> Html Msg
 view model =
-    case model of
-        todoList ->
-            div []
-                [ renderTodoList model.todolist
-                ]
+    div []
+        [ input [ placeholder "new to do", value model.textField, onInput Change ] []
+        , button [] []
+        , p [] [ text <| model.textField ]
+        , div [] [ renderTodoList model.todolist ]
+        ]
