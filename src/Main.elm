@@ -21,8 +21,9 @@ main =
 
 defaultModel : Model
 defaultModel =
-    { todolist = [ { description = "Hello" } ]
+    { todolist = []
     , textField = ""
+    , uid = 0
     }
 
 
@@ -34,6 +35,7 @@ init _ =
 type Msg
     = Change String
     | AddTodo
+    | Delete Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -44,15 +46,19 @@ update msg model =
 
         AddTodo ->
             ( { model
-                | todolist =
+                | uid = model.uid + 1
+                , todolist =
                     if String.isEmpty model.textField then
                         model.todolist
 
                     else
-                        model.todolist ++ [ addTodo model.textField ]
+                        model.todolist ++ [ addTodo model.textField model.uid ]
               }
             , Cmd.none
             )
+
+        Delete todoId ->
+            ( { model | todolist = filterTodoList model.todolist todoId }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -62,31 +68,42 @@ subscriptions model =
 
 type alias Todo =
     { description : String
+    , id : Int
+    , completed : Bool
     }
 
 
 type alias Model =
     { todolist : List Todo
     , textField : String
+    , uid : Int
     }
 
 
-addTodo : String -> Todo
-addTodo todoText =
+addTodo : String -> Int -> Todo
+addTodo todoText todoId =
     { description = todoText
+    , id = todoId
+    , completed = False
     }
+
+
+filterTodoList : List Todo -> Int -> List Todo
+filterTodoList list todoId =
+    List.filter (\todo -> todo.id /= todoId) list
 
 
 renderTodoList : List Todo -> Html Msg
 renderTodoList list =
     ul []
-        (List.map (\todo -> li [] [ text todo.description ]) list)
+        (List.map (\todo -> li [ id ("todo-" ++ String.fromInt todo.id) ] [ text todo.description, button [ onClick (Delete todo.id) ] [ text "delete todo" ] ]) list)
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ input [ placeholder "new to do", value model.textField, onInput Change ] []
-        , button [ onClick AddTodo ] [ text "add to do" ]
+        [ label [ class "db fw6 lh-copy f6", for "new-todo" ] [ text "Your new todo" ]
+        , input [ class "pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100", name "new-todo", id "new-todo", value model.textField, onInput Change ] []
+        , a [ class "f6 link dim ph3 pv2 mb2 dib white bg-mid-gray", href "#0", onClick AddTodo ] [ text "Add todo" ]
         , div [] [ renderTodoList model.todolist ]
         ]
