@@ -32,20 +32,27 @@ init _ =
 
 
 type Msg
-    = NoOp
-    | Change String
+    = Change String
+    | AddTodo
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model
-            , Cmd.none
-            )
-
         Change textInputValue ->
             ( { model | textField = textInputValue }, Cmd.none )
+
+        AddTodo ->
+            ( { model
+                | todolist =
+                    if String.isEmpty model.textField then
+                        model.todolist
+
+                    else
+                        model.todolist ++ [ addTodo model.textField ]
+              }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
@@ -64,6 +71,12 @@ type alias Model =
     }
 
 
+addTodo : String -> Todo
+addTodo todoText =
+    { description = todoText
+    }
+
+
 renderTodoList : List Todo -> Html Msg
 renderTodoList list =
     ul []
@@ -74,7 +87,6 @@ view : Model -> Html Msg
 view model =
     div []
         [ input [ placeholder "new to do", value model.textField, onInput Change ] []
-        , button [] []
-        , p [] [ text <| model.textField ]
+        , button [ onClick AddTodo ] [ text "add to do" ]
         , div [] [ renderTodoList model.todolist ]
         ]
