@@ -24,6 +24,7 @@ defaultModel =
     { todolist = []
     , textField = ""
     , uid = 0
+    , visibility = "All"
     }
 
 
@@ -36,6 +37,7 @@ type Msg
     = Change String
     | AddTodo
     | Delete Int
+    | ApplyFilter String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,6 +62,9 @@ update msg model =
         Delete todoId ->
             ( { model | todolist = filterTodoList model.todolist todoId }, Cmd.none )
 
+        ApplyFilter filter ->
+            ( { model | visibility = filter }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -77,6 +82,7 @@ type alias Model =
     { todolist : List Todo
     , textField : String
     , uid : Int
+    , visibility : String
     }
 
 
@@ -99,10 +105,17 @@ renderTodoList list =
         (List.map (\todo -> li [ id ("todo-" ++ String.fromInt todo.id) ] [ text todo.description, button [ onClick (Delete todo.id) ] [ text "delete todo" ] ]) list)
 
 
+renderFilters : Html Msg
+renderFilters =
+    ul []
+        (List.map (\txt -> li [] [ a [ onClick (ApplyFilter txt) ] [ text txt ] ]) [ "All", "Completed", "Not completed" ])
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ label [ class "db fw6 lh-copy f6", for "new-todo" ] [ text "Your new todo" ]
+        [ renderFilters
+        , label [ class "db fw6 lh-copy f6", for "new-todo" ] [ text "Your new todo" ]
         , input [ class "pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100", name "new-todo", id "new-todo", value model.textField, onInput Change ] []
         , a [ class "f6 link dim ph3 pv2 mb2 dib white bg-mid-gray", href "#0", onClick AddTodo ] [ text "Add todo" ]
         , div [] [ renderTodoList model.todolist ]
