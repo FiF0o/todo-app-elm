@@ -48,7 +48,8 @@ update msg model =
 
         AddTodo ->
             ( { model
-                | uid = model.uid + 1
+                | textField = ""
+                , uid = model.uid + 1
                 , todolist =
                     if String.isEmpty model.textField then
                         model.todolist
