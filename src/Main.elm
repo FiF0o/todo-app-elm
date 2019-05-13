@@ -38,6 +38,7 @@ type Msg
     | AddTodo
     | Delete Int
     | ApplyFilter String
+    | Completed Int Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -65,6 +66,19 @@ update msg model =
 
         ApplyFilter filter ->
             ( { model | visibility = filter }, Cmd.none )
+
+        Completed id isCompleted ->
+            let
+                updateTodo todo =
+                    if todo.id == id then
+                        { todo | completed = isCompleted }
+
+                    else
+                        todo
+            in
+            ( { model | todolist = List.map updateTodo model.todolist }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
@@ -103,7 +117,25 @@ filterTodoList list todoId =
 renderTodoList : List Todo -> Html Msg
 renderTodoList list =
     ul []
-        (List.map (\todo -> li [ id ("todo-" ++ String.fromInt todo.id) ] [ text todo.description, button [ onClick (Delete todo.id) ] [ text "delete todo" ] ]) list)
+        (List.map
+            (\todo ->
+                li
+                    [ id ("todo-" ++ String.fromInt todo.id)
+                    , class
+                        (if todo.completed then
+                            "completed"
+
+                         else
+                            "not-completed"
+                        )
+                    ]
+                    [ p [ onDoubleClick (Completed todo.id (not todo.completed)) ] [ text todo.description ]
+                    , button [ onClick (Delete todo.id) ]
+                        [ text "delete todo" ]
+                    ]
+            )
+            list
+        )
 
 
 renderFilters : Html Msg
