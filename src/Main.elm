@@ -37,8 +37,8 @@ type Msg
     = Change String
     | AddTodo
     | Delete Int
-    | ApplyFilter String
     | Completed Int Bool
+    | ApplyVisibilityFilters String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,9 +64,6 @@ update msg model =
         Delete todoId ->
             ( { model | todolist = filterTodoList model.todolist todoId }, Cmd.none )
 
-        ApplyFilter filter ->
-            ( { model | visibility = filter }, Cmd.none )
-
         Completed id isCompleted ->
             let
                 updateTodo todo =
@@ -77,6 +74,14 @@ update msg model =
                         todo
             in
             ( { model | todolist = List.map updateTodo model.todolist }
+            , Cmd.none
+            )
+
+        ApplyVisibilityFilters currentFilter ->
+            ( { model
+                | visibility = currentFilter
+                , todolist = applyFilter currentFilter model.todolist
+              }
             , Cmd.none
             )
 
@@ -114,6 +119,22 @@ filterTodoList list todoId =
     List.filter (\todo -> todo.id /= todoId) list
 
 
+applyFilter visibilityStatus list =
+    let
+        isVisible todo =
+            case visibilityStatus of
+                "Completed" ->
+                    todo.completed
+
+                "Not Completed" ->
+                    not todo.completed
+
+                "All" ->
+                    True
+    in
+    List.map (List.filter isVisible) list
+
+
 renderTodoList : List Todo -> Html Msg
 renderTodoList list =
     ul []
@@ -141,7 +162,7 @@ renderTodoList list =
 renderFilters : Html Msg
 renderFilters =
     ul []
-        (List.map (\txt -> li [] [ a [ onClick (ApplyFilter txt) ] [ text txt ] ]) [ "All", "Completed", "Not completed" ])
+        (List.map (\txt -> li [] [ a [ onClick (ApplyVisibilityFilters txt) ] [ text txt ] ]) [ "All", "Completed", "Not completed" ])
 
 
 view : Model -> Html Msg
@@ -151,5 +172,5 @@ view model =
         , label [ class "db fw6 lh-copy f6", for "new-todo" ] [ text "Your new todo" ]
         , input [ class "pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100", name "new-todo", id "new-todo", value model.textField, onInput Change ] []
         , a [ class "f6 link dim ph3 pv2 mb2 dib white bg-mid-gray", href "#0", onClick AddTodo ] [ text "Add todo" ]
-        , div [] [ renderTodoList model.todolist ]
+        , div [] [ renderTodoList <| model.todolist ]
         ]
