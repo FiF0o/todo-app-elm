@@ -24,7 +24,7 @@ defaultModel =
     { todolist = []
     , textField = ""
     , uid = 0
-    , visibility = "All"
+    , visibility = ViewAll
     }
 
 
@@ -33,12 +33,31 @@ init _ =
     ( defaultModel, Cmd.none )
 
 
+type Visibility
+    = ViewAll
+    | ViewCompleted
+    | ViewNotCompleted
+
+
+visibilityLookup : Visibility -> String
+visibilityLookup visibility =
+    case visibility of
+        ViewAll ->
+            "All"
+
+        ViewCompleted ->
+            "Completed"
+
+        ViewNotCompleted ->
+            "Not completed"
+
+
 type Msg
     = Change String
     | AddTodo
     | Delete Int
     | Completed Int Bool
-    | ApplyVisibilityFilters String
+    | ApplyVisibilityFilters Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,7 +99,6 @@ update msg model =
         ApplyVisibilityFilters currentFilter ->
             ( { model
                 | visibility = currentFilter
-                , todolist = applyFilter currentFilter model.todolist
               }
             , Cmd.none
             )
@@ -102,7 +120,7 @@ type alias Model =
     { todolist : List Todo
     , textField : String
     , uid : Int
-    , visibility : String
+    , visibility : Visibility
     }
 
 
@@ -123,13 +141,13 @@ applyFilter visibilityStatus list =
     let
         isVisible todo =
             case visibilityStatus of
-                "Completed" ->
+                ViewCompleted ->
                     todo.completed
 
-                "Not Completed" ->
+                ViewNotCompleted ->
                     not todo.completed
 
-                "All" ->
+                ViewAll ->
                     True
     in
     List.map (List.filter isVisible) list
@@ -161,8 +179,11 @@ renderTodoList list =
 
 renderFilters : Html Msg
 renderFilters =
-    ul []
-        (List.map (\txt -> li [] [ a [ onClick (ApplyVisibilityFilters txt) ] [ text txt ] ]) [ "All", "Completed", "Not completed" ])
+    let
+        filtersElm =
+            List.map (\filter -> li [] [ a [ onClick (ApplyVisibilityFilters filter) ] [ text (visibilityLookup filter) ] ]) [ ViewAll, ViewCompleted, ViewNotCompleted ]
+    in
+    ul [] filtersElm
 
 
 view : Model -> Html Msg
@@ -173,4 +194,5 @@ view model =
         , input [ class "pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100", name "new-todo", id "new-todo", value model.textField, onInput Change ] []
         , a [ class "f6 link dim ph3 pv2 mb2 dib white bg-mid-gray", href "#0", onClick AddTodo ] [ text "Add todo" ]
         , div [] [ renderTodoList <| model.todolist ]
+        , div [] [ text (visibilityLookup model.visibility) ]
         ]
